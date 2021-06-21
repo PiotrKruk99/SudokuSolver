@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <script src="https://unpkg.com/vue@3"></script>
+</<head>
+
+<body>
+  <div id="App">
+    {{ test }}
+    {{ errorMsg }}
+    <table>
+      <tr v-for="row in nine">
+        <td v-for="item in getRow(row)" >
+          <input type="text" v-model="item.field" :key="item.id"
+          style="width: 20px; height: 20px; text-align: center"
+          :style="{background: item.backColor}" />
+        </td>
+      </tr>
+    </table>
+    <input type="text" v-for="item in fields" v-model="item.row" :key="item.id"
+    style="width: 20px; height: 20px; text-align: center" />
+    <hr />
+    <button v-on:click="setValue">Test1</button>
+    <button v-on:click="sudokuValidation">Walidacja</button>
+    <hr />
+    <input type="text" v-model="importText" />
+    <button v-on:click="importValues">Import</button>
+    {{ importText.split(',').length }}
+  </div>
+
+
+  <script>
+    const AppData = {
+      data() {
+        return {
+          test: 'to jest test',
+          errorMsg: 'gotowy',
+          fields: [],// = [{text: 'dhdh'}],
+          nine: [1,2,3,4,5,6,7,8,9],
+          importText: '',
+          validChars: ['1','2','3','4','5','6','7','8','9','0','']
+        }
+      },
+
+      mounted() {
+        for (i = 0; i < 81; i++)
+        {
+          this.fields[i] = {field: '', row: this.whichRow(i), column: this.whichColumn(i),
+                            square: this.whichSquare(i), backColor: this.getColor(this.whichSquare(i))};
+          //this.squares[i] = {row: whichRow(i)};
+        }
+        //this.fields[3].field = Math.round(25.5);
+      },
+
+      methods: {
+        setValue() {
+          //this.fields[4].field = 50;
+          //this.fields[1].field = this.fields[30].field;
+          this.fields[5].backColor = 'red';
+        },
+
+        //import danych z pola tekstowego
+        importValues() {
+          let imp = this.importText.split(",");
+
+          for (let i = 0; i < 81; i++)
+            this.fields[i].field = imp[i];
+        },
+
+        //pełna walidacja diagramu
+        sudokuValidation() {
+          if (!this.checkFields()) {
+            this.errorMsg = 'niepoprwna wartość pola';
+            return;
+          }
+
+          this.validateFields();
+        },
+
+        //sprawdza poprawność w liniach, kolumnach i kwadratach
+        validateFields() {
+          for (let i = 1; i < 10; i++) {
+            let f = this.getRow(i);
+
+            if (!this.checkNine(f)) {
+              this.errorMsg = 'bląd w wierszu';
+              this.colorNine(f);
+              return;
+            }
+
+            f = this.getColumn(i);
+
+            if (!this.checkNine(f)) {
+              this.errorMsg = 'bląd w kolumnie';
+              this.colorNine(f);
+              return;
+            }
+
+            f = this.getSquare(i);
+
+            if (!this.checkNine(f)) {
+              this.errorMsg = 'bląd w kwadracie';
+              this.colorNine(f);
+              return;
+            }
+          }
+        },
+
+        //oznaczenie błędnej linii
+        colorNine(val) {
+          for (let it of val)
+            it.backColor = 'red';
+        },
+
+        //sprawdza czy wartości z tablicy się nie powtarzają
+        checkNine(val) {
+          let toNine = [];
+
+          for (let it of val) {
+            if (toNine.includes(it.field) && it.field.length != 0) {
+              return false;
+            }
+            else {
+              toNine[toNine.length] = it.field;
+            }
+          }
+
+          return true;
+        },
+
+        //sprawdza pola pod kątem wartości innych niż 0-9
+        checkFields() {
+          let isValid = true;
+
+          for (let item of this.fields) {
+            item.field = item.field.trim();
+
+            if (!this.validChars.includes(item.field)) {
+              item.backColor = 'red';
+              isValid = false;
+            }
+            else {
+              item.backColor = this.getColor(item.square);
+            }
+          }
+
+          return isValid;
+        },
+
+        //oblicza numer linii pola
+        whichRow(val) {
+          return Math.ceil((val + 1) / 9);
+        },
+
+        //oblicza numer kolumny pola
+        whichColumn(val) {
+          return val - (Math.floor(val / 9) * 9) + 1;
+        },
+
+        //oblicza numer kwadratu pola
+        whichSquare(val) {
+          return (Math.floor((this.whichRow(val) - 1) / 3) * 3) + (Math.floor((this.whichColumn(val) - 1) / 3) + 1);
+        },
+
+        //zwraca tablicę elementów linii o zadanym numerze
+        getRow(val) {
+          var row = [];
+
+          for (let item of this.fields)
+            if (item.row == val)
+              row[row.length] = item;
+
+          return row;
+        },
+
+        //zwrca tablicę elementów kolumny o żądanym numerze
+        getColumn(val) {
+          var col = [];
+
+          for (let item of this.fields)
+            if (item.column == val)
+              col[col.length] = item;
+
+          return col;
+        },
+
+        //zwraca tablicę elementów kwadratu o żądanym numerze
+        getSquare(val) {
+          var sq = [];
+
+          for (let item of this.fields)
+            if (item.square == val)
+              sq[sq.length] = item;
+
+          return sq;
+        },
+
+        //początkowa inicjacja kolorów pól
+        getColor(val) { //getting square number as paramenter
+          if ((Math.floor(val / 2) * 2) == val )
+            return 'white';
+          else
+            return 'lightBlue';
+        }
+      }
+    }
+
+    Vue.createApp(AppData).mount('#App');
+
+  </script>
+</body>
+</html>
